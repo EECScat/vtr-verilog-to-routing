@@ -2,11 +2,11 @@
 # https://github.com/duck2/uxsdcxx
 # Modify only if your build process doesn't involve regenerating this file.
 #
-# Cmdline: uxsdcxx/uxsdcap.py /home/kmurray/trees/vtr/vpr/src/route/rr_graph.xsd
-# Input file: /home/kmurray/trees/vtr/vpr/src/route/rr_graph.xsd
-# md5sum of input file: 40e83d2ea6556761d4e29f21324b1871
+# Cmdline: uxsdcxx/uxsdcap.py rr_graph.xsd
+# Input file: rr_graph.xsd
+# md5sum of input file: c4f47394efd27f5819c943829c111204
 
-@0xb803100e76d3342d;
+@0x9e90feddf132e6a8;
 using Cxx = import "/capnp/c++.capnp";
 $Cxx.namespace("ucap");
 
@@ -81,6 +81,7 @@ struct Timing {
 	cout @2 :Float32;
 	r @3 :Float32;
 	tdel @4 :Float32;
+	penaltyCost @5 :Float32;
 }
 
 struct Sizing {
