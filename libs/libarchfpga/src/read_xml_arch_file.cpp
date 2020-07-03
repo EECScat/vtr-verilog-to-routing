@@ -1842,6 +1842,26 @@ static void ProcessMode(vtr::string_internment* strings, pugi::xml_node Parent, 
         mode->name = vtr::strdup(Prop);
     }
 
+    /* Parse XML about if this mode is disable for packing or not
+     * By default, all the mode will be visible to packer 
+     */
+    mode->disable_packing = false;
+
+    /* If the parent mode is disabled for packing,
+     * all the child mode should be disabled for packing as well
+     */
+    if (nullptr != mode->parent_pb_type->parent_mode) {
+        mode->disable_packing = mode->parent_pb_type->parent_mode->disable_packing;
+    }
+
+    /* Override if user specify */
+    mode->disable_packing = get_attribute(Parent, "disable_packing", loc_data, ReqOpt::OPTIONAL).as_bool(mode->disable_packing);
+    if (true == mode->disable_packing) {
+        VTR_LOG("mode '%s[%s]' is defined by user to be disabled in packing\n",
+                mode->parent_pb_type->name,
+                mode->name);
+    }
+
     mode->num_pb_type_children = count_children(Parent, "pb_type", loc_data, ReqOpt::OPTIONAL);
     if (mode->num_pb_type_children > 0) {
         mode->pb_type_children = new t_pb_type[mode->num_pb_type_children];
@@ -3958,23 +3978,23 @@ static void ProcessSwitches(pugi::xml_node Parent,
         SwitchType type = SwitchType::MUX;
         if (0 == strcmp(type_name, "mux")) {
             type = SwitchType::MUX;
-            expect_only_attributes(Node, {"type", "name", "R", "Cin", "Cout", "Cinternal", "Tdel", "penalty_cost", "buf_size", "power_buf_size", "mux_trans_size"}, " with type '"s + type_name + "'"s, loc_data);
+            expect_only_attributes(Node, {"type", "name", "R", "Cin", "Cout", "Cinternal", "Tdel", "buf_size", "power_buf_size", "mux_trans_size"}, " with type '"s + type_name + "'"s, loc_data);
 
         } else if (0 == strcmp(type_name, "tristate")) {
             type = SwitchType::TRISTATE;
-            expect_only_attributes(Node, {"type", "name", "R", "Cin", "Cout", "Cinternal", "Tdel", "penalty_cost", "buf_size", "power_buf_size"}, " with type '"s + type_name + "'"s, loc_data);
+            expect_only_attributes(Node, {"type", "name", "R", "Cin", "Cout", "Cinternal", "Tdel", "buf_size", "power_buf_size"}, " with type '"s + type_name + "'"s, loc_data);
 
         } else if (0 == strcmp(type_name, "buffer")) {
             type = SwitchType::BUFFER;
-            expect_only_attributes(Node, {"type", "name", "R", "Cin", "Cout", "Tdel", "penalty_cost", "buf_size", "power_buf_size"}, " with type '"s + type_name + "'"s, loc_data);
+            expect_only_attributes(Node, {"type", "name", "R", "Cin", "Cout", "Tdel", "buf_size", "power_buf_size"}, " with type '"s + type_name + "'"s, loc_data);
 
         } else if (0 == strcmp(type_name, "pass_gate")) {
             type = SwitchType::PASS_GATE;
-            expect_only_attributes(Node, {"type", "name", "R", "Cin", "Cout", "Tdel", "penalty_cost"}, " with type '"s + type_name + "'"s, loc_data);
+            expect_only_attributes(Node, {"type", "name", "R", "Cin", "Cout", "Tdel"}, " with type '"s + type_name + "'"s, loc_data);
 
         } else if (0 == strcmp(type_name, "short")) {
             type = SwitchType::SHORT;
-            expect_only_attributes(Node, {"type", "name", "R", "Cin", "Cout", "Tdel", "penalty_cost"}, " with type "s + type_name + "'"s, loc_data);
+            expect_only_attributes(Node, {"type", "name", "R", "Cin", "Cout", "Tdel"}, " with type "s + type_name + "'"s, loc_data);
         } else {
             archfpga_throw(loc_data.filename_c_str(), loc_data.line(Node),
                            "Invalid switch type '%s'.\n", type_name);
@@ -3997,7 +4017,6 @@ static void ProcessSwitches(pugi::xml_node Parent,
         arch_switch.Cin = get_attribute(Node, "Cin", loc_data, CIN_REQD).as_float(0);
         arch_switch.Cout = get_attribute(Node, "Cout", loc_data, COUT_REQD).as_float(0);
         arch_switch.Cinternal = get_attribute(Node, "Cinternal", loc_data, CINTERNAL_REQD).as_float(0);
-        arch_switch.penalty_cost = get_attribute(Node, "penalty_cost", loc_data, ReqOpt::OPTIONAL).as_float(0);
 
         if (arch_switch.type() == SwitchType::MUX) {
             //Only muxes have mux transistors
